@@ -22,9 +22,13 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
             $sqlParameters[':category'] = intval($_GET['$category']);
         }
 
-        if(isset($_GET['$mine']) && $_GET['$mine'] === 'true') {
+        $isMine = isset($_GET['$mine']) && $_GET['$mine'] === 'true';
+
+        if($isMine) {
             $whereClauses[] = '`user_id` = :user_id';
             $sqlParameters[':user_id'] = $user['id'];
+        } else {
+            $whereClauses[] = '`expires_at` > NOW()';
         }
 
         $filter = null;
@@ -63,7 +67,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         ]);
 
         $rows = $db->queryAll("
-            SELECT `a`.`id`, `a`.`title`, LEFT(`a`.`body`, 300) AS `body`, `a`.`category`, `ap`.`id` AS `first_photo_id`
+            SELECT `a`.`id`, `a`.`title`, LEFT(`a`.`body`, 300) AS `body`, `a`.`category`, `a`.`expires_at`, `ap`.`id` AS `first_photo_id`
             FROM `adverts` AS `a`
             LEFT OUTER JOIN `advert_photos` AS `ap` ON `ap`.`advert_id` = `a`.`id`
                 AND `ap`.`ordering` = (
@@ -86,6 +90,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
                     'title' => $row['title'],
                     'body' => $row['body'],
                     'category' => $row['category'],
+                    'expires_at' => $row['expires_at'],
                     'first_photo_id' => $row['first_photo_id']
                 ];
             }, $rows)
@@ -238,10 +243,10 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
 
         $db->execute("
             INSERT INTO `adverts` (
-                `user_id`, `category`, `title`, `body`
+                `user_id`, `category`, `title`, `body`, `expires_at`
             )
             VALUES (
-                :user_id, :category, :title, :body
+                :user_id, :category, :title, :body, DATE_ADD(NOW(), INTERVAL 3 MONTH)
             )
         ", [
             ':user_id' => $user['id'],
@@ -289,6 +294,36 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         ]);
     });
 
+    $r->addRoute('POST', 'api/adverts/extend', function($_, $values) use ($db, $user) {
+        if(!$user) {
+            http_response_code(401);
+            return new JSON(["success" => false, "reason" => "UNAUTHORIZED"]);
+        }
+
+        $body = json_decode(file_get_contents('php://input'), true);
+        $type = $body['type'];
+        $items = array_map('intval', $body['items']);
+
+        if($type === 'including') {
+            foreach($items as $id) {
+                $db->execute("
+                    UPDATE `adverts`
+                    SET `expires_at` = DATE_ADD(NOW(), INTERVAL 3 MONTH)
+                    WHERE `id` = :id AND `user_id` = :user_id
+                ", [':id' => $id, ':user_id' => $user['id']]);
+            }
+        } else {
+            $db->execute("
+                UPDATE `adverts`
+                SET `expires_at` = DATE_ADD(NOW(), INTERVAL 3 MONTH)
+                WHERE `user_id` = :user_id
+                AND `id` NOT IN (" . implode(',', $items ?: [0]) . ")
+            ", [':user_id' => $user['id']]);
+        }
+
+        return new JSON(["success" => true]);
+    });
+
     $r->addRoute('POST', 'api/adverts/{id:\\d+}', function($para, $values) use ($db, $user, $file_storage) {
         if(!$user) {
             http_response_code(401);
@@ -308,7 +343,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
 
         $db->execute("
             UPDATE `adverts`
-            SET `category` = :category, `title` = :title, `body` = :body
+            SET `category` = :category, `title` = :title, `body` = :body, `expires_at` = DATE_ADD(NOW(), INTERVAL 3 MONTH)
             WHERE `id` = :id
         ", [
             ':category' => intval($_POST['category']),

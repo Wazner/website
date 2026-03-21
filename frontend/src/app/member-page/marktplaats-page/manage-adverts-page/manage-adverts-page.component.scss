@@ -40,3 +40,13 @@
 .table-row:hover > td {
     background-color: rgba(100, 100, 100, 0.1);
 }
+
+.expired-icon {
+    color: #f5a623;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    position: relative;
+    top: 3px;
+    margin-left: 3px;
+}

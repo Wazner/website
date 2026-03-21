@@ -11,6 +11,7 @@ interface Advert {
   id: number;
   title: string;
   category: number;
+  expires_at: string;
 }
 
 @Component({
@@ -23,7 +24,7 @@ export class ManageAdvertsPageComponent implements OnInit {
   totalCount = 0;
   pageIndex = 0;
   pageSize = 50;
-  columnsToDisplay = ['select', 'title', 'category'];
+  columnsToDisplay = ['select', 'title', 'category', 'expires_at'];
   selection = new SelectionMap<number>();
   loading = false;
 
@@ -63,6 +64,20 @@ export class ManageAdvertsPageComponent implements OnInit {
     this.pageIndex = ev.pageIndex;
     this.pageSize = ev.pageSize;
     this.loadAdverts();
+  }
+
+  onExtendClick() {
+    this.httpClient.post('/api/adverts/extend', {
+      type: this.selection.type === SelectionType.Including ? 'including' : 'excluding',
+      items: Array.from(this.selection.items)
+    }).subscribe(() => {
+      this.selection.clear();
+      this.loadAdverts();
+    });
+  }
+
+  isExpired(advert: Advert): boolean {
+    return new Date(advert.expires_at) < new Date();
   }
 
   onEditClick() {
