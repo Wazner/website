@@ -1,6 +1,7 @@
 <h2 class="title">Advertenties beheren</h2>
 <app-toolbar>
     <ng-container *ngIf="selection.size > 0">
+        <button mat-raised-button (click)="onEditClick()" color="primary" [disabled]="selection.size >= 2"><mat-icon>edit</mat-icon> Bewerken</button>
         <button mat-button (click)="onDeleteClick()"><mat-icon>delete</mat-icon> Verwijderen</button>
     </ng-container>
 </app-toolbar>

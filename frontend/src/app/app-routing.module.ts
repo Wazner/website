@@ -39,6 +39,7 @@ import { MarktplaatsPageComponent } from './member-page/marktplaats-page/marktpl
 import { AddAdvertPageComponent as MemberAddAdvertPageComponent } from './member-page/marktplaats-page/add-advert-page/add-advert-page.component';
 import { ManageAdvertsPageComponent as MemberManageAdvertsPageComponent } from './member-page/marktplaats-page/manage-adverts-page/manage-adverts-page.component';
 import { ViewAdvertPageComponent as MemberViewAdvertsPageComponent } from './member-page/marktplaats-page/view-advert-page/view-advert-page.component';
+import { EditAdvertPageComponent as MemberEditAdvertPageComponent } from './member-page/marktplaats-page/edit-advert-page/edit-advert-page.component';
 
 const routes: Routes = [
   { path: "", component: HomePageComponent },
@@ -82,6 +83,7 @@ const routes: Routes = [
       { path: "marktplaats", component: MarktplaatsPageComponent },
       { path: "marktplaats/toevoegen", component: MemberAddAdvertPageComponent },
       { path: "marktplaats/beheren", component: MemberManageAdvertsPageComponent },
+      { path: "marktplaats/:id/bewerken", component: MemberEditAdvertPageComponent },
       { path: "marktplaats/:id", component: MemberViewAdvertsPageComponent },
       { path: "**", component: NotFoundPageComponent }
     ]

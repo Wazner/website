@@ -65,6 +65,11 @@ export class ManageAdvertsPageComponent implements OnInit {
     this.loadAdverts();
   }
 
+  onEditClick() {
+    const id = this.selection.items.values().next().value;
+    this.router.navigate(['..', id, 'bewerken'], { relativeTo: this.route });
+  }
+
   onDeleteClick() {
     const dialog = this.dialog.open(DeleteConfirmationDialogComponent, {
       data: {

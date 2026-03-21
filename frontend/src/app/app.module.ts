@@ -89,6 +89,7 @@ import { MarktplaatsPageComponent } from './member-page/marktplaats-page/marktpl
 import { AddAdvertPageComponent } from './member-page/marktplaats-page/add-advert-page/add-advert-page.component';
 import { ManageAdvertsPageComponent } from './member-page/marktplaats-page/manage-adverts-page/manage-adverts-page.component';
 import { ViewAdvertPageComponent } from './member-page/marktplaats-page/view-advert-page/view-advert-page.component';
+import { EditAdvertPageComponent } from './member-page/marktplaats-page/edit-advert-page/edit-advert-page.component';
 import { FilePreviewDirective } from './file-preview.directive';
 
 @NgModule({
@@ -137,6 +138,7 @@ import { FilePreviewDirective } from './file-preview.directive';
     AddAdvertPageComponent,
     ManageAdvertsPageComponent,
     ViewAdvertPageComponent,
+    EditAdvertPageComponent,
     FilePreviewDirective
   ],
   imports: [

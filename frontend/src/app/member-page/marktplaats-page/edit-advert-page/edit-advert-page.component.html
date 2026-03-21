@@ -1,0 +1,58 @@
+<h2 class="title">Advertentie bewerken</h2>
+<app-message type="error" *ngIf="loadErrorMessage !== null">
+    {{loadErrorMessage}}
+</app-message>
+<app-message type="error" *ngIf="errorMessage !== null">
+    {{errorMessage}}
+</app-message>
+<form *ngIf="!loading && loadErrorMessage === null" (submit)="onSubmit($event)" [formGroup]="formGroup">
+    <div class="title-container">
+        <mat-form-field appearance="fill" class="category-input">
+            <mat-label>Categorie</mat-label>
+            <mat-select formControlName="category">
+                <mat-option [value]="0">Dieren</mat-option>
+                <mat-option [value]="1">Vlees</mat-option>
+                <mat-option [value]="2">Vacht</mat-option>
+            </mat-select>
+            <mat-error *ngIf="formGroup.controls.category.hasError('required')">Verplicht</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="fill" class="title-input">
+            <mat-label>Titel</mat-label>
+            <input matInput formControlName="title">
+            <mat-error *ngIf="formGroup.controls.title.hasError('required')">Verplicht</mat-error>
+        </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="fill" class="body-input">
+        <mat-label>Informatie over de advertentie en contactgegevens</mat-label>
+        <textarea matInput rows="15" formControlName="body"></textarea>
+        <mat-error *ngIf="formGroup.controls.body.hasError('required')">Verplicht</mat-error>
+    </mat-form-field>
+
+    <div class="photos-container">
+        <h3 class="photos-title">Foto's</h3>
+        <div class="photos-list">
+            <div class="photo" *ngFor="let photo of existingPhotos">
+                <img [src]="getExistingPhotoUrl(photo.id)" />
+                <button class="delete-photo" (click)="onDeleteExistingPhotoClick(photo.id)" type="button">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+            <div class="photo" *ngFor="let photo of newPhotos; let i = index">
+                <img [appFilePreview]="photo" />
+                <button class="delete-photo" (click)="onDeleteNewPhotoClick(i)" type="button">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+            <button class="add-photo" (click)="onAddPhotoClick()" type="button">
+                <mat-icon>add</mat-icon>
+                <input type="file" #fileInput class="add-photo-input" multiple="true" (change)="onFileInputChange()" />
+            </button>
+        </div>
+    </div>
+
+    <app-form-actions>
+        <button mat-raised-button color="primary" type="submit">Opslaan</button>
+        <button mat-button (click)="onCancelClick()" type="button">Annuleren</button>
+    </app-form-actions>
+</form>
