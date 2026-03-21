@@ -67,7 +67,7 @@ class Auth {
     }
 
     static function get_select_list() {
-        return "`id`, `selection_name`, `name`, `email`, `reset_password_on_login`, `studbook_heideschaap`, `studbook_heideschaap_ko`, `studbook_schoonebeeker`, `studbook_schoonebeeker_ko`, `role_website_contributor`, `role_member_administrator`, `role_studbook_administrator`, `role_studbook_inspector`";
+        return "`id`, `selection_name`, `name`, `email`, `reset_password_on_login`, `studbook_heideschaap`, `studbook_heideschaap_ko`, `studbook_schoonebeeker`, `studbook_schoonebeeker_ko`, `role_website_contributor`, `role_member_administrator`, `role_studbook_administrator`, `role_studbook_inspector`, `role_marktplaats_administrator`";
     }
 
     static function create_user_obj($row) {
@@ -83,7 +83,8 @@ class Auth {
 			"role_website_contributor" => boolval($row['role_website_contributor']),
             "role_member_administrator" => boolval($row['role_member_administrator']),
 			"role_studbook_administrator" => boolval($row['role_studbook_administrator']),
-			"role_studbook_inspector" => boolval($row['role_studbook_inspector'])
+			"role_studbook_inspector" => boolval($row['role_studbook_inspector']),
+            "role_marktplaats_administrator" => boolval($row['role_marktplaats_administrator'])
         ];
     }
 }

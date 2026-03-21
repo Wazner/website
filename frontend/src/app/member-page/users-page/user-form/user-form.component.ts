@@ -14,7 +14,8 @@ export interface UserForm {
   role_website_contributor: FormControl<boolean | null>,
   role_member_administrator: FormControl<boolean | null>,
   role_studbook_administrator: FormControl<boolean | null>,
-  role_studbook_inspector: FormControl<boolean | null>
+  role_studbook_inspector: FormControl<boolean | null>,
+  role_marktplaats_administrator: FormControl<boolean | null>
 }
 
 @Component({
@@ -51,6 +52,7 @@ export function createFormGroup(): FormGroup<UserForm> {
     role_website_contributor: new FormControl<boolean>(false),
     role_member_administrator: new FormControl<boolean>(false),
     role_studbook_administrator: new FormControl<boolean>(false),
-    role_studbook_inspector: new FormControl<boolean>(false)
+    role_studbook_inspector: new FormControl<boolean>(false),
+    role_marktplaats_administrator: new FormControl<boolean>(false)
   });
 }

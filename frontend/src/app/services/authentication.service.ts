@@ -12,7 +12,8 @@ export interface User {
   role_website_contributor: boolean,
   role_member_administrator: boolean,
   role_studbook_administrator: boolean,
-  role_studbook_inspector: boolean
+  role_studbook_inspector: boolean,
+  role_marktplaats_administrator: boolean
 }
 
 @Injectable({
@@ -27,6 +28,10 @@ export class AuthenticationService {
     if(user) {
       this.userSubject$.next(JSON.parse(user) as User);
     }
+  }
+
+  getCurrentUser(): User | null {
+    return this.userSubject$.getValue();
   }
 
   notifyLogin(user: User) {

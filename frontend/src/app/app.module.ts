@@ -34,6 +34,7 @@ import { MatToolbarModule } from "@angular/material/toolbar"
 import { MatSidenavModule } from "@angular/material/sidenav"
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 import { AppComponent } from './app.component';
 import { HomePageComponent } from './home-page/home-page.component';
@@ -170,6 +171,7 @@ import { FilePreviewDirective } from './file-preview.directive';
     MatSidenavModule,
     MatDatepickerModule,
     MatMenuModule,
+    MatButtonToggleModule,
 
     VerticalMenuModule,
     ToolbarModule,

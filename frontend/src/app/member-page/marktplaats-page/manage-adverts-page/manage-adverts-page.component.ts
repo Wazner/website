@@ -6,12 +6,15 @@ import { AppTitleService } from 'src/app/services/app-title.service';
 import { SelectionMap, SelectionType } from 'src/app/services/selection';
 import { DeleteConfirmationDialogComponent } from 'src/app/delete-confirmation-dialog/delete-confirmation-dialog.component';
 import { PageEvent } from '@angular/material/paginator';
+import { AuthenticationService } from 'src/app/services/authentication.service';
+import { MatButtonToggleChange } from '@angular/material/button-toggle';
 
 interface Advert {
   id: number;
   title: string;
   category: number;
   expires_at: string;
+  user_name?: string;
 }
 
 @Component({
@@ -24,30 +27,50 @@ export class ManageAdvertsPageComponent implements OnInit {
   totalCount = 0;
   pageIndex = 0;
   pageSize = 50;
-  columnsToDisplay = ['select', 'title', 'category', 'expires_at'];
   selection = new SelectionMap<number>();
   loading = false;
+  adminMode = false;
+  isMarktplaatsAdmin = false;
+
+  get columnsToDisplay() {
+    const cols = ['select', 'title', 'category', 'expires_at'];
+    if (this.adminMode) cols.push('user_name');
+    return cols;
+  }
 
   constructor(
     private httpClient: HttpClient,
     private dialog: MatDialog,
     private router: Router,
     private route: ActivatedRoute,
+    authService: AuthenticationService,
     titleService: AppTitleService
   ) {
     titleService.setTitle("Advertenties beheren - Ledenportaal");
+    const user = authService.getCurrentUser();
+    this.isMarktplaatsAdmin = user?.role_marktplaats_administrator ?? false;
   }
 
   ngOnInit(): void {
     this.loadAdverts();
   }
 
+  onAdminModeChange() {
+    this.selection.clear();
+    this.pageIndex = 0;
+    this.loadAdverts();
+  }
+
   loadAdverts() {
     this.loading = true;
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('$page', this.pageIndex.toString())
-      .set('$pageSize', this.pageSize.toString())
-      .set('$mine', 'true');
+      .set('$pageSize', this.pageSize.toString());
+    if (this.adminMode) {
+      params = params.set('$admin', 'true');
+    } else {
+      params = params.set('$mine', 'true');
+    }
 
     this.httpClient.get<any>('/api/adverts', { params })
       .subscribe(result => {
@@ -69,7 +92,8 @@ export class ManageAdvertsPageComponent implements OnInit {
   onExtendClick() {
     this.httpClient.post('/api/adverts/extend', {
       type: this.selection.type === SelectionType.Including ? 'including' : 'excluding',
-      items: Array.from(this.selection.items)
+      items: Array.from(this.selection.items),
+      admin: this.adminMode
     }).subscribe(() => {
       this.selection.clear();
       this.loadAdverts();
@@ -99,7 +123,8 @@ export class ManageAdvertsPageComponent implements OnInit {
       this.httpClient.request('delete', '/api/adverts', {
         body: {
           type: this.selection.type === SelectionType.Including ? 'including' : 'excluding',
-          items: Array.from(this.selection.items)
+          items: Array.from(this.selection.items),
+          admin: this.adminMode
         }
       }).subscribe(() => {
         this.selection.clear();

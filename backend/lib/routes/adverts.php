@@ -23,12 +23,15 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         }
 
         $isMine = isset($_GET['$mine']) && $_GET['$mine'] === 'true';
+        $isAdmin = isset($_GET['$admin']) && $_GET['$admin'] === 'true' && $user['role_marktplaats_administrator'];
 
-        if($isMine) {
-            $whereClauses[] = '`user_id` = :user_id';
+        if($isAdmin) {
+            // Admin mode: show all adverts including expired, from all users
+        } elseif($isMine) {
+            $whereClauses[] = '`a`.`user_id` = :user_id';
             $sqlParameters[':user_id'] = $user['id'];
         } else {
-            $whereClauses[] = '`expires_at` > NOW()';
+            $whereClauses[] = '`a`.`expires_at` > NOW()';
         }
 
         $filter = null;
@@ -47,7 +50,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         // Count total number of adverts
         $row = $db->querySingle("
             SELECT COUNT(1) AS `cnt`
-            FROM `adverts`
+            FROM `adverts` AS `a`
             $filterSql
         ", $sqlParameters);
         $totalCount = $row['cnt'];
@@ -66,14 +69,18 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
             ":skip" => $page * $pageSize
         ]);
 
+        $userJoin = $isAdmin ? "LEFT JOIN `users` AS `u` ON `u`.`id` = `a`.`user_id`" : "";
+        $userSelect = $isAdmin ? ", `u`.`name` AS `user_name`" : "";
+
         $rows = $db->queryAll("
-            SELECT `a`.`id`, `a`.`title`, LEFT(`a`.`body`, 300) AS `body`, `a`.`category`, `a`.`expires_at`, `ap`.`id` AS `first_photo_id`
+            SELECT `a`.`id`, `a`.`title`, LEFT(`a`.`body`, 300) AS `body`, `a`.`category`, `a`.`expires_at`, `ap`.`id` AS `first_photo_id` $userSelect
             FROM `adverts` AS `a`
             LEFT OUTER JOIN `advert_photos` AS `ap` ON `ap`.`advert_id` = `a`.`id`
                 AND `ap`.`ordering` = (
                     SELECT MIN(`ap2`.`ordering`) FROM `advert_photos` AS `ap2`
                     WHERE `ap2`.`advert_id` = `a`.`id`
                 )
+            $userJoin
             $filterSql
             ORDER BY `a`.`id` DESC
             LIMIT :limit
@@ -84,8 +91,8 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
             'success' => true,
             'totalCount' => $totalCount,
             'pageIndex' => $page,
-            'rows' => array_map(function($row) {
-                return [
+            'rows' => array_map(function($row) use ($isAdmin) {
+                $result = [
                     'id' => $row['id'],
                     'title' => $row['title'],
                     'body' => $row['body'],
@@ -93,6 +100,8 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
                     'expires_at' => $row['expires_at'],
                     'first_photo_id' => $row['first_photo_id']
                 ];
+                if($isAdmin) $result['user_name'] = $row['user_name'];
+                return $result;
             }, $rows)
         ]);
     });
@@ -196,33 +205,33 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         $body = json_decode(file_get_contents('php://input'), true);
         $type = $body['type'];
         $items = array_map('intval', $body['items']);
+        $isAdmin = !empty($body['admin']) && $user['role_marktplaats_administrator'];
+
+        $deleteAdvert = function($id) use ($db, $user, $file_storage, $isAdmin) {
+            $advert = $db->querySingle("SELECT `user_id` FROM `adverts` WHERE `id` = :id", [':id' => $id]);
+            if(!$advert) return;
+            if(!$isAdmin && $advert['user_id'] !== $user['id']) return;
+            $photos = $db->queryAll("SELECT `id` FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
+            foreach($photos as $photo) {
+                $path = $file_storage . DIRECTORY_SEPARATOR . "advert-" . $id . "-" . $photo['id'] . ".jpg";
+                if(file_exists($path)) unlink($path);
+            }
+            $db->execute("DELETE FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
+            $db->execute("DELETE FROM `adverts` WHERE `id` = :id", [':id' => $id]);
+        };
 
         if($type === 'including') {
             foreach($items as $id) {
-                $advert = $db->querySingle("SELECT `user_id` FROM `adverts` WHERE `id` = :id", [':id' => $id]);
-                if($advert && $advert['user_id'] === $user['id']) {
-                    $photos = $db->queryAll("SELECT `id` FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
-                    foreach($photos as $photo) {
-                        $path = $file_storage . DIRECTORY_SEPARATOR . "advert-" . $id . "-" . $photo['id'] . ".jpg";
-                        if(file_exists($path)) unlink($path);
-                    }
-                    $db->execute("DELETE FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
-                    $db->execute("DELETE FROM `adverts` WHERE `id` = :id AND `user_id` = :user_id", [':id' => $id, ':user_id' => $user['id']]);
-                }
+                $deleteAdvert($id);
             }
         } else {
-            // excluding: delete all of the user's adverts except the listed items
-            $adverts = $db->queryAll("SELECT `id` FROM `adverts` WHERE `user_id` = :user_id", [':user_id' => $user['id']]);
-            foreach($adverts as $advert) {
+            // excluding: delete all (admin) or own adverts except the listed items
+            $scope = $isAdmin
+                ? $db->queryAll("SELECT `id` FROM `adverts`", [])
+                : $db->queryAll("SELECT `id` FROM `adverts` WHERE `user_id` = :user_id", [':user_id' => $user['id']]);
+            foreach($scope as $advert) {
                 if(!in_array($advert['id'], $items)) {
-                    $id = $advert['id'];
-                    $photos = $db->queryAll("SELECT `id` FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
-                    foreach($photos as $photo) {
-                        $path = $file_storage . DIRECTORY_SEPARATOR . "advert-" . $id . "-" . $photo['id'] . ".jpg";
-                        if(file_exists($path)) unlink($path);
-                    }
-                    $db->execute("DELETE FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
-                    $db->execute("DELETE FROM `adverts` WHERE `id` = :id", [':id' => $id]);
+                    $deleteAdvert($advert['id']);
                 }
             }
         }
@@ -303,22 +312,26 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         $body = json_decode(file_get_contents('php://input'), true);
         $type = $body['type'];
         $items = array_map('intval', $body['items']);
+        $isAdmin = !empty($body['admin']) && $user['role_marktplaats_administrator'];
+
+        $ownerClause = $isAdmin ? "" : "AND `user_id` = :user_id";
+        $ownerParam = $isAdmin ? [] : [':user_id' => $user['id']];
 
         if($type === 'including') {
             foreach($items as $id) {
                 $db->execute("
                     UPDATE `adverts`
                     SET `expires_at` = DATE_ADD(NOW(), INTERVAL 3 MONTH)
-                    WHERE `id` = :id AND `user_id` = :user_id
-                ", [':id' => $id, ':user_id' => $user['id']]);
+                    WHERE `id` = :id $ownerClause
+                ", array_merge([':id' => $id], $ownerParam));
             }
         } else {
+            $excludeList = implode(',', $items ?: [0]);
             $db->execute("
                 UPDATE `adverts`
                 SET `expires_at` = DATE_ADD(NOW(), INTERVAL 3 MONTH)
-                WHERE `user_id` = :user_id
-                AND `id` NOT IN (" . implode(',', $items ?: [0]) . ")
-            ", [':user_id' => $user['id']]);
+                WHERE `id` NOT IN ($excludeList) $ownerClause
+            ", $ownerParam);
         }
 
         return new JSON(["success" => true]);
@@ -336,7 +349,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         $id = intval($para['id']);
 
         $advert = $db->querySingle("SELECT `user_id` FROM `adverts` WHERE `id` = :id", [':id' => $id]);
-        if(!$advert || $advert['user_id'] !== $user['id']) {
+        if(!$advert || ($advert['user_id'] !== $user['id'] && !$user['role_marktplaats_administrator'])) {
             http_response_code(403);
             return new JSON(["success" => false, "reason" => "FORBIDDEN"]);
         }

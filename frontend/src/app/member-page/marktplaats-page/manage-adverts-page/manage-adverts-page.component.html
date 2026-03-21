@@ -5,6 +5,7 @@
         <button mat-button (click)="onExtendClick()"><mat-icon>update</mat-icon> Verlengen</button>
         <button mat-button (click)="onDeleteClick()"><mat-icon>delete</mat-icon> Verwijderen</button>
     </ng-container>
+    <mat-button-toggle *ngIf="isMarktplaatsAdmin" [checked]="adminMode" (change)="adminMode = $event.source.checked; onAdminModeChange()" color="primary" class="admin-mode-checkbox">Beheer modus</mat-button-toggle>
 </app-toolbar>
 
 <div *ngIf="!loading && adverts.length === 0" class="empty">
@@ -46,6 +47,11 @@
             {{advert.expires_at | date:'d-M-yyyy'}}
             <mat-icon class="expired-icon" *ngIf="isExpired(advert)" matTooltip="Advertentie is verlopen">warning</mat-icon>
         </td>
+    </ng-container>
+
+    <ng-container matColumnDef="user_name">
+        <th mat-header-cell *matHeaderCellDef>Eigenaar</th>
+        <td mat-cell *matCellDef="let advert">{{advert.user_name}}</td>
     </ng-container>
 
     <ng-container matColumnDef="paginator">

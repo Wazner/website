@@ -93,9 +93,9 @@ function register_users_routes(FastRoute\RouteCollector $r, \Lib\Database $db, $
 
         // Count total number of users
         $user = $db->querySingle("
-            SELECT 
-                `email`, `name`, `reset_password_on_login`, `studbook_heideschaap`, `studbook_heideschaap_ko`, `studbook_schoonebeeker`, `studbook_schoonebeeker_ko`, 
-                `role_website_contributor`, `role_member_administrator`, `role_studbook_administrator`, `role_studbook_inspector`
+            SELECT
+                `email`, `name`, `reset_password_on_login`, `studbook_heideschaap`, `studbook_heideschaap_ko`, `studbook_schoonebeeker`, `studbook_schoonebeeker_ko`,
+                `role_website_contributor`, `role_member_administrator`, `role_studbook_administrator`, `role_studbook_inspector`, `role_marktplaats_administrator`
             FROM `users`
             WHERE id = :id
         ", [
@@ -121,8 +121,9 @@ function register_users_routes(FastRoute\RouteCollector $r, \Lib\Database $db, $
                 'studbook_schoonebeeker_ko' => boolval($user['studbook_schoonebeeker_ko']), 
                 'role_website_contributor' => boolval($user['role_website_contributor']),
                 'role_member_administrator' => boolval($user['role_member_administrator']),
-                'role_studbook_administrator' => boolval($user['role_studbook_administrator']), 
-                'role_studbook_inspector' => boolval($user['role_studbook_inspector'])
+                'role_studbook_administrator' => boolval($user['role_studbook_administrator']),
+                'role_studbook_inspector' => boolval($user['role_studbook_inspector']),
+                'role_marktplaats_administrator' => boolval($user['role_marktplaats_administrator'])
             ]
         ]);
     });
@@ -203,13 +204,13 @@ function register_users_routes(FastRoute\RouteCollector $r, \Lib\Database $db, $
             $db->execute("
                 INSERT INTO `users` (
                     `email`, `name`, `password_hash`, `reset_password_on_login`,
-                    `studbook_heideschaap`, `studbook_heideschaap_ko`, `studbook_schoonebeeker`, `studbook_schoonebeeker_ko`, 
-                    `role_website_contributor`, `role_member_administrator`, `role_studbook_administrator`, `role_studbook_inspector`
+                    `studbook_heideschaap`, `studbook_heideschaap_ko`, `studbook_schoonebeeker`, `studbook_schoonebeeker_ko`,
+                    `role_website_contributor`, `role_member_administrator`, `role_studbook_administrator`, `role_studbook_inspector`, `role_marktplaats_administrator`
                 )
                 VALUES (
                     :email, :name, :password_hash, 1,
                     :studbook_heideschaap, :studbook_heideschaap_ko, :studbook_schoonebeeker, :studbook_schoonebeeker_ko,
-                    :role_website_contributor, :role_member_administrator, :role_studbook_administrator, :role_studbook_inspector
+                    :role_website_contributor, :role_member_administrator, :role_studbook_administrator, :role_studbook_inspector, :role_marktplaats_administrator
                 )
             ", [
                 ':email' => $values['email'],
@@ -222,7 +223,8 @@ function register_users_routes(FastRoute\RouteCollector $r, \Lib\Database $db, $
                 ':role_website_contributor' => boolval($values['role_website_contributor']),
                 ':role_member_administrator' => boolval($values['role_member_administrator']),
                 ':role_studbook_administrator' => boolval($values['role_studbook_administrator']),
-                ':role_studbook_inspector' => boolval($values['role_studbook_inspector'])
+                ':role_studbook_inspector' => boolval($values['role_studbook_inspector']),
+                ':role_marktplaats_administrator' => boolval($values['role_marktplaats_administrator'])
             ]);
 
             $user_id = $db->lastInsertId();
@@ -291,8 +293,9 @@ function register_users_routes(FastRoute\RouteCollector $r, \Lib\Database $db, $
                     `studbook_schoonebeeker_ko` = :studbook_schoonebeeker_ko, 
                     `role_website_contributor` = :role_website_contributor, 
                     `role_member_administrator` = :role_member_administrator,
-                    `role_studbook_administrator` = :role_studbook_administrator, 
-                    `role_studbook_inspector` = :role_studbook_inspector
+                    `role_studbook_administrator` = :role_studbook_administrator,
+                    `role_studbook_inspector` = :role_studbook_inspector,
+                    `role_marktplaats_administrator` = :role_marktplaats_administrator
                 WHERE
                     id = :id
             ", [
@@ -308,6 +311,7 @@ function register_users_routes(FastRoute\RouteCollector $r, \Lib\Database $db, $
                 ':role_member_administrator' => boolval($values['role_member_administrator']),
                 ':role_studbook_administrator' => boolval($values['role_studbook_administrator']),
                 ':role_studbook_inspector' => boolval($values['role_studbook_inspector']),
+                ':role_marktplaats_administrator' => boolval($values['role_marktplaats_administrator']),
             ]);
 
             return new JSON([
