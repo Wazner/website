@@ -63,7 +63,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         ]);
 
         $rows = $db->queryAll("
-            SELECT `a`.`id`, `a`.`title`, `a`.`body`, `a`.`category`, `ap`.`id` AS `first_photo_id`
+            SELECT `a`.`id`, `a`.`title`, LEFT(`a`.`body`, 300) AS `body`, `a`.`category`, `ap`.`id` AS `first_photo_id`
             FROM `adverts` AS `a`
             LEFT OUTER JOIN `advert_photos` AS `ap` ON `ap`.`advert_id` = `a`.`id`
                 AND `ap`.`ordering` = (
