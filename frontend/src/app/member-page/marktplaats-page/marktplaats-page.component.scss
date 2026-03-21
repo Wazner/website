@@ -1,0 +1,38 @@
+.title {
+    color: #000;
+    margin: 0;
+    padding: 0;
+}
+
+.category ::ng-deep .mat-form-field-flex {
+    padding: 0 !important;
+}
+
+.category ::ng-deep .mat-form-field-infix {
+    padding: 0.75em !important;
+    border-top: none !important;
+}
+
+.category ::ng-deep .mat-select-arrow-wrapper {
+    transform: none !important;
+}
+
+.search-box {
+    width: 400px;
+}
+
+.empty {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    font-size: 16px;
+    padding: 15px;
+    color: dimgray;
+}
+
+.empty > .icon {
+    margin-right: 24px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+}

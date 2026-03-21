@@ -1,0 +1,24 @@
+<h2 class="title">Marktplaats</h2>
+<app-toolbar>
+    <button mat-raised-button color="primary" (click)="onAddClick()"><mat-icon>add</mat-icon> Advertentie plaatsen</button>
+    <app-toolbar-separator></app-toolbar-separator>
+    <mat-form-field class="category" appearance="fill">
+        <mat-select matNativeControl>
+            <mat-option value="" selected>Alle categorieën</mat-option>
+            <mat-option value="dieren">Dieren</mat-option>
+            <mat-option value="vlees">Vlees</mat-option>
+            <mat-option value="vacht">Vacht</mat-option>
+        </mat-select>
+    </mat-form-field>
+    <mat-form-field class="small search-box" appearance="fill" floatLabel="never">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Zoeken..." />
+    </mat-form-field>
+    <app-toolbar-separator></app-toolbar-separator>
+    <button mat-button><mat-icon>list_alt</mat-icon> Advertenties beheren</button>
+</app-toolbar>
+
+<div class="empty">
+    <mat-icon class="icon">storefront</mat-icon>
+    <p>Er zijn op dit moment geen actieve advertenties</p>
+</div>

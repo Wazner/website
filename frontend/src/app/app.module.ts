@@ -33,6 +33,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatToolbarModule } from "@angular/material/toolbar"
 import { MatSidenavModule } from "@angular/material/sidenav"
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatMenuModule } from '@angular/material/menu';
 
 import { AppComponent } from './app.component';
 import { HomePageComponent } from './home-page/home-page.component';
@@ -84,6 +85,11 @@ import { FalcooPageComponent } from './member-page/falcoo-page/falcoo-page.compo
 import { ProtocollenCLPageComponent } from './member-page/protocollen-clpage/protocollen-clpage.component';
 import { InstructieRvoMachtigingComponent } from './lid-worden-page/inschrijven-page/instructie-rvo-machtiging/instructie-rvo-machtiging.component';
 import { MobileMenuComponent } from './mobile-menu/mobile-menu.component';
+import { MarktplaatsPageComponent } from './member-page/marktplaats-page/marktplaats-page.component';
+import { AddAdvertPageComponent } from './member-page/marktplaats-page/add-advert-page/add-advert-page.component';
+import { ManageAdvertsPageComponent } from './member-page/marktplaats-page/manage-adverts-page/manage-adverts-page.component';
+import { ViewAdvertPageComponent } from './member-page/marktplaats-page/view-advert-page/view-advert-page.component';
+import { FilePreviewDirective } from './file-preview.directive';
 
 @NgModule({
   declarations: [
@@ -126,7 +132,12 @@ import { MobileMenuComponent } from './mobile-menu/mobile-menu.component';
     FalcooPageComponent,
     ProtocollenCLPageComponent,
     InstructieRvoMachtigingComponent,
-    MobileMenuComponent
+    MobileMenuComponent,
+    MarktplaatsPageComponent,
+    AddAdvertPageComponent,
+    ManageAdvertsPageComponent,
+    ViewAdvertPageComponent,
+    FilePreviewDirective
   ],
   imports: [
     BrowserModule,
@@ -156,7 +167,8 @@ import { MobileMenuComponent } from './mobile-menu/mobile-menu.component';
     MatToolbarModule,
     MatSidenavModule,
     MatDatepickerModule,
-    
+    MatMenuModule,
+
     VerticalMenuModule,
     ToolbarModule,
     FormModule

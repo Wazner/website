@@ -35,6 +35,10 @@ import { SignupsPageComponent as MemberSignupsPageComponent } from './member-pag
 import { ViewSignupPageComponent as MemberViewSignupPageComponent } from './member-page/signups-page/view-signup-page/view-signup-page.component';
 import { VerzondenPageComponent as InschrijvenVerzondenPageComponent } from './lid-worden-page/inschrijven-page/verzonden-page/verzonden-page.component';
 import { NewPasswordPageComponent } from './login-page/new-password-page/new-password-page.component';
+import { MarktplaatsPageComponent } from './member-page/marktplaats-page/marktplaats-page.component';
+import { AddAdvertPageComponent as MemberAddAdvertPageComponent } from './member-page/marktplaats-page/add-advert-page/add-advert-page.component';
+import { ManageAdvertsPageComponent as MemberManageAdvertsPageComponent } from './member-page/marktplaats-page/manage-adverts-page/manage-adverts-page.component';
+import { ViewAdvertPageComponent as MemberViewAdvertsPageComponent } from './member-page/marktplaats-page/view-advert-page/view-advert-page.component';
 
 const routes: Routes = [
   { path: "", component: HomePageComponent },
@@ -75,6 +79,10 @@ const routes: Routes = [
       { path: "gebruikers/:id", component: MemberEditUserPageComponent },
       { path: "falcoo", component: MemberFalcooPageComponent },
       { path: "protocollen-cl", component: MemberProtocollenCLPageComponent },
+      { path: "marktplaats", component: MarktplaatsPageComponent },
+      { path: "marktplaats/toevoegen", component: MemberAddAdvertPageComponent },
+      { path: "marktplaats/beheren", component: MemberManageAdvertsPageComponent },
+      { path: "marktplaats/:id", component: MemberViewAdvertsPageComponent },
       { path: "**", component: NotFoundPageComponent }
     ]
   },

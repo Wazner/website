@@ -30,6 +30,7 @@ $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) u
     register_dekverklaringen_routes($r, $db, $user, $mailer_factory, $file_storage, $mail_targets);
     register_huiskeuringen_routes($r, $db, $user, $mailer_factory, $file_storage, $mail_targets);
     register_signup_routes($r, $db, $user, $mailer_factory, $file_storage, $mail_targets);
+    register_adverts_routes($r, $db, $user, $file_storage);
 });
 
 // Fetch method and URI from somewhere
