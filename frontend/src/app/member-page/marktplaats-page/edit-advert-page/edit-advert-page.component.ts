@@ -123,7 +123,7 @@ export class EditAdvertPageComponent implements OnInit {
       formData.append("photos[]", this.newPhotos[i], this.newPhotos[i].name);
     }
 
-    this.httpClient.patch<{ success: boolean }>(`/api/adverts/${this.id}`, formData)
+    this.httpClient.post<{ success: boolean }>(`/api/adverts/${this.id}`, formData)
       .subscribe(() => {
         this.router.navigate(["marktplaats", "beheren"], { relativeTo: this.route.parent });
         this.snackBar.open("Advertentie is bijgewerkt", undefined, { duration: 5000 });

@@ -289,7 +289,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         ]);
     });
 
-    $r->addRoute('PATCH', 'api/adverts/{id:\\d+}', function($para, $values) use ($db, $user, $file_storage) {
+    $r->addRoute('POST', 'api/adverts/{id:\\d+}', function($para, $values) use ($db, $user, $file_storage) {
         if(!$user) {
             http_response_code(401);
             return new JSON([
@@ -300,8 +300,64 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
 
         $id = intval($para['id']);
 
-        return new JSON([
-            "success" => true
+        $advert = $db->querySingle("SELECT `user_id` FROM `adverts` WHERE `id` = :id", [':id' => $id]);
+        if(!$advert || $advert['user_id'] !== $user['id']) {
+            http_response_code(403);
+            return new JSON(["success" => false, "reason" => "FORBIDDEN"]);
+        }
+
+        $db->execute("
+            UPDATE `adverts`
+            SET `category` = :category, `title` = :title, `body` = :body
+            WHERE `id` = :id
+        ", [
+            ':category' => intval($_POST['category']),
+            ':title' => $_POST['title'],
+            ':body' => $_POST['body'],
+            ':id' => $id
         ]);
+
+        // Delete photos marked for removal
+        if(isset($_POST['deleted_photo_ids'])) {
+            foreach($_POST['deleted_photo_ids'] as $photo_id) {
+                $photo_id = intval($photo_id);
+                $path = $file_storage . DIRECTORY_SEPARATOR . "advert-" . $id . "-" . $photo_id . ".jpg";
+                if(file_exists($path)) unlink($path);
+                $db->execute("DELETE FROM `advert_photos` WHERE `id` = :id AND `advert_id` = :advert_id", [
+                    ':id' => $photo_id,
+                    ':advert_id' => $id
+                ]);
+            }
+        }
+
+        // Add new photos
+        if(isset($_FILES['photos'])) {
+            $maxOrdering = $db->querySingle("SELECT MAX(`ordering`) AS `max` FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
+            $nextOrdering = ($maxOrdering['max'] !== null ? intval($maxOrdering['max']) : -1) + 1;
+
+            foreach($_FILES['photos']['tmp_name'] as $index => $tmp_name) {
+                $db->execute("
+                    INSERT INTO `advert_photos` (`advert_id`, `ordering`)
+                    VALUES (:advert_id, :ordering)
+                ", [
+                    ':advert_id' => $id,
+                    ':ordering' => $nextOrdering + $index
+                ]);
+
+                $photo_id = $db->lastInsertId();
+                $destinationPath = $file_storage . DIRECTORY_SEPARATOR . "advert-" . $id . "-" . $photo_id . ".jpg";
+                $image = new Imagick($tmp_name);
+                $image->autoOrient();
+                $image->stripImage();
+                $image->thumbnailImage(1200, 1200, true);
+                $image->setImageFormat('jpeg');
+                $image->setImageCompressionQuality(80);
+                $image->writeImage($destinationPath);
+                $image->clear();
+                $image->destroy();
+            }
+        }
+
+        return new JSON(["success" => true]);
     });
 }
