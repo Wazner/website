@@ -9,10 +9,6 @@ export class FilePreviewDirective implements OnInit {
   constructor(private el: ElementRef<HTMLImageElement>) { }
 
   ngOnInit(): void {
-    const reader = new FileReader();
-    reader.addEventListener("load", (ev) => {
-      this.el.nativeElement.src = ev.target?.result as string;
-    });
-    reader.readAsDataURL(this.file);
+    this.el.nativeElement.src = URL.createObjectURL(this.file);
   }
 }
