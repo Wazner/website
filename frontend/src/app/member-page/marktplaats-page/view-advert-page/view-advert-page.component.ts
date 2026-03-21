@@ -50,10 +50,6 @@ export class ViewAdvertPageComponent implements OnInit {
       });
   }
 
-  onBackClick() {
-    this.router.navigate(['..'], { relativeTo: this.route });
-  }
-
   getCategoryName(category: number): string {
     switch (category) {
       case 0: return 'Dieren';

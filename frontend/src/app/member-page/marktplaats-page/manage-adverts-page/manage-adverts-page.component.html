@@ -1,7 +1,5 @@
 <h2 class="title">Advertenties beheren</h2>
 <app-toolbar>
-    <button mat-button (click)="onBackClick()"><mat-icon>arrow_back</mat-icon> Terug</button>
-    <app-toolbar-separator></app-toolbar-separator>
     <ng-container *ngIf="selection.size > 0">
         <button mat-button (click)="onDeleteClick()"><mat-icon>delete</mat-icon> Verwijderen</button>
     </ng-container>
