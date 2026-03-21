@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AppTitleService } from 'src/app/services/app-title.service';
+import { GalleryItem, ImageItem } from 'ng-gallery';
 
 interface Advert {
   id: number;
@@ -20,7 +21,7 @@ interface Advert {
 export class ViewAdvertPageComponent implements OnInit {
   advert: Advert | null = null;
   notFound = false;
-  selectedPhotoIndex = 0;
+  galleryItems: GalleryItem[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -37,6 +38,10 @@ export class ViewAdvertPageComponent implements OnInit {
       .subscribe(result => {
         if (result.success) {
           this.advert = result.advert;
+          this.galleryItems = result.advert.photos.map((p: { id: number }) => {
+            const url = `/api/adverts/${result.advert.id}/photos/${p.id}`;
+            return new ImageItem({ src: url, thumb: url });
+          });
         } else {
           this.notFound = true;
         }
@@ -56,13 +61,5 @@ export class ViewAdvertPageComponent implements OnInit {
       case 2: return 'Vacht';
       default: return '';
     }
-  }
-
-  getPhotoUrl(photoId: number): string {
-    return `/api/adverts/${this.advert!.id}/photos/${photoId}`;
-  }
-
-  selectPhoto(index: number) {
-    this.selectedPhotoIndex = index;
   }
 }

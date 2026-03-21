@@ -1,4 +1,3 @@
-<h2 class="title">Advertentie</h2>
 <app-toolbar>
     <button mat-button (click)="onBackClick()"><mat-icon>arrow_back</mat-icon> Terug</button>
 </app-toolbar>
@@ -8,24 +7,13 @@
     <p>Advertentie niet gevonden</p>
 </div>
 
-<div *ngIf="advert" class="advert-detail">
-    <div class="advert-photos" *ngIf="advert.photos.length > 0">
-        <div class="main-photo">
-            <img [src]="getPhotoUrl(advert.photos[selectedPhotoIndex].id)" [alt]="advert.title" />
-        </div>
-        <div class="photo-thumbnails" *ngIf="advert.photos.length > 1">
-            <div class="thumbnail"
-                 *ngFor="let photo of advert.photos; let i = index"
-                 [class.active]="i === selectedPhotoIndex"
-                 (click)="selectPhoto(i)">
-                <img [src]="getPhotoUrl(photo.id)" [alt]="advert.title" />
-            </div>
-        </div>
-    </div>
+<div *ngIf="advert">
+    <h2 class="title">{{advert.title}}</h2>
+    <div class="category">{{getCategoryName(advert.category)}}</div>
+    <p class="body">{{advert.body}}</p>
 
-    <div class="advert-info">
-        <div class="advert-category">{{getCategoryName(advert.category)}}</div>
-        <h2 class="advert-title">{{advert.title}}</h2>
-        <div class="advert-body">{{advert.body}}</div>
+    <div class="photos-container" *ngIf="galleryItems.length > 0">
+        <h3 class="photos-title">Foto's</h3>
+        <gallery class="gallery" [items]="galleryItems" [loop]="true" [thumb]="true"></gallery>
     </div>
 </div>
