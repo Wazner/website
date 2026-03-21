@@ -1,6 +1,7 @@
 <?php
 
 use Lib\Results\JSON;
+use Lib\Results\File;
 use Lib\Utils;
 
 function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db, $user, string $file_storage) {
@@ -271,7 +272,9 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
                 $photo_id = $db->lastInsertId();
                 $destinationPath = $file_storage . DIRECTORY_SEPARATOR . "advert-" . $advert_id . "-" . $photo_id . ".jpg";
                 $image = new Imagick($tmp_name);
+                $image->autoOrient();
                 $image->stripImage();
+                $image->thumbnailImage(1200, 1200, true);
                 $image->setImageFormat('jpeg');
                 $image->setImageCompressionQuality(80);
                 $image->writeImage($destinationPath);
