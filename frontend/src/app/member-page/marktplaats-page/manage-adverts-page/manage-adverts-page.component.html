@@ -1,1 +1,54 @@
-<p>manage-adverts-page works!</p>
+<h2 class="title">Advertenties beheren</h2>
+<app-toolbar>
+    <button mat-button (click)="onBackClick()"><mat-icon>arrow_back</mat-icon> Terug</button>
+    <app-toolbar-separator></app-toolbar-separator>
+    <ng-container *ngIf="selection.size > 0">
+        <button mat-button (click)="onDeleteClick()"><mat-icon>delete</mat-icon> Verwijderen</button>
+    </ng-container>
+</app-toolbar>
+
+<div *ngIf="!loading && adverts.length === 0" class="empty">
+    <mat-icon class="icon">storefront</mat-icon>
+    <p>U heeft nog geen actieve advertenties</p>
+</div>
+
+<table *ngIf="adverts.length > 0" class="adverts-table" mat-table [dataSource]="adverts">
+    <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef width="65">
+            <mat-checkbox (change)="selection.toggleMaster()"
+                [checked]="selection.allSelected"
+                [indeterminate]="selection.partialSelection"
+                color="primary">
+            </mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row">
+            <mat-checkbox (click)="$event.stopPropagation()"
+                        (change)="selection.toggle(row.id)"
+                        [checked]="selection.isSelected(row.id)"
+                        color="primary">
+            </mat-checkbox>
+        </td>
+    </ng-container>
+
+    <ng-container matColumnDef="title">
+        <th mat-header-cell *matHeaderCellDef>Titel</th>
+        <td mat-cell *matCellDef="let advert">{{advert.title}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef>Categorie</th>
+        <td mat-cell *matCellDef="let advert">{{getCategoryName(advert.category)}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="paginator">
+        <td mat-footer-cell *matFooterCellDef colspan="99" class="paginator">
+            <mat-paginator [pageIndex]="pageIndex" [pageSize]="pageSize" [length]="totalCount" [pageSizeOptions]="[50]" (page)="onPage($event)" showFirstLastButtons></mat-paginator>
+        </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+    <tr mat-row class="table-row" *matRowDef="let row; columns: columnsToDisplay"
+        (click)="selection.toggle(row.id)">
+    </tr>
+    <tr mat-footer-row *matFooterRowDef="['paginator']"></tr>
+</table>

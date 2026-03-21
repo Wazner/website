@@ -1,1 +1,31 @@
-<p>view-advert-page works!</p>
+<h2 class="title">Advertentie</h2>
+<app-toolbar>
+    <button mat-button (click)="onBackClick()"><mat-icon>arrow_back</mat-icon> Terug</button>
+</app-toolbar>
+
+<div *ngIf="notFound" class="not-found">
+    <mat-icon class="icon">error_outline</mat-icon>
+    <p>Advertentie niet gevonden</p>
+</div>
+
+<div *ngIf="advert" class="advert-detail">
+    <div class="advert-photos" *ngIf="advert.photos.length > 0">
+        <div class="main-photo">
+            <img [src]="getPhotoUrl(advert.photos[selectedPhotoIndex].id)" [alt]="advert.title" />
+        </div>
+        <div class="photo-thumbnails" *ngIf="advert.photos.length > 1">
+            <div class="thumbnail"
+                 *ngFor="let photo of advert.photos; let i = index"
+                 [class.active]="i === selectedPhotoIndex"
+                 (click)="selectPhoto(i)">
+                <img [src]="getPhotoUrl(photo.id)" [alt]="advert.title" />
+            </div>
+        </div>
+    </div>
+
+    <div class="advert-info">
+        <div class="advert-category">{{getCategoryName(advert.category)}}</div>
+        <h2 class="advert-title">{{advert.title}}</h2>
+        <div class="advert-body">{{advert.body}}</div>
+    </div>
+</div>

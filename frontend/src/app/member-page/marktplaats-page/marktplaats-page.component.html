@@ -3,22 +3,48 @@
     <button mat-raised-button color="primary" (click)="onAddClick()"><mat-icon>add</mat-icon> Advertentie plaatsen</button>
     <app-toolbar-separator></app-toolbar-separator>
     <mat-form-field class="category" appearance="fill">
-        <mat-select matNativeControl>
-            <mat-option value="" selected>Alle categorieën</mat-option>
-            <mat-option value="dieren">Dieren</mat-option>
-            <mat-option value="vlees">Vlees</mat-option>
-            <mat-option value="vacht">Vacht</mat-option>
+        <mat-select [formControl]="categoryControl">
+            <mat-option value="">Alle categorieën</mat-option>
+            <mat-option value="0">Dieren</mat-option>
+            <mat-option value="1">Vlees</mat-option>
+            <mat-option value="2">Vacht</mat-option>
         </mat-select>
     </mat-form-field>
     <mat-form-field class="small search-box" appearance="fill" floatLabel="never">
         <mat-icon matPrefix>search</mat-icon>
-        <input matInput placeholder="Zoeken..." />
+        <input matInput placeholder="Zoeken..." [formControl]="searchControl" />
     </mat-form-field>
     <app-toolbar-separator></app-toolbar-separator>
-    <button mat-button><mat-icon>list_alt</mat-icon> Advertenties beheren</button>
+    <button mat-button (click)="onManageClick()"><mat-icon>list_alt</mat-icon> Advertenties beheren</button>
 </app-toolbar>
 
-<div class="empty">
+<div *ngIf="!loading && adverts.length === 0" class="empty">
     <mat-icon class="icon">storefront</mat-icon>
     <p>Er zijn op dit moment geen actieve advertenties</p>
 </div>
+
+<div class="adverts-grid" *ngIf="adverts.length > 0">
+    <mat-card class="advert-card" *ngFor="let advert of adverts" (click)="onAdvertClick(advert.id)">
+        <div class="advert-photo" *ngIf="advert.first_photo_id">
+            <img [src]="getPhotoUrl(advert.id, advert.first_photo_id)" [alt]="advert.title" />
+        </div>
+        <div class="advert-photo advert-photo-placeholder" *ngIf="!advert.first_photo_id">
+            <mat-icon>image</mat-icon>
+        </div>
+        <mat-card-content>
+            <div class="advert-category">{{getCategoryName(advert.category)}}</div>
+            <h3 class="advert-title">{{advert.title}}</h3>
+            <p class="advert-body">{{advert.body}}</p>
+        </mat-card-content>
+    </mat-card>
+</div>
+
+<mat-paginator
+    *ngIf="totalCount > pageSize"
+    [pageIndex]="pageIndex"
+    [pageSize]="pageSize"
+    [length]="totalCount"
+    [pageSizeOptions]="[12, 24, 48]"
+    (page)="onPage($event)"
+    showFirstLastButtons>
+</mat-paginator>

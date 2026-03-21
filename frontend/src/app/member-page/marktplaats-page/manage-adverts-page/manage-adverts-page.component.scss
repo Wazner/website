@@ -1,0 +1,42 @@
+.title {
+    color: #000;
+    margin: 0;
+    padding: 0;
+}
+
+.empty {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    font-size: 16px;
+    padding: 15px;
+    color: dimgray;
+}
+
+.empty > .icon {
+    margin-right: 24px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+}
+
+.adverts-table {
+    width: 100%;
+}
+
+.paginator {
+    border-bottom: 0px;
+}
+
+.table-row {
+    cursor: pointer;
+}
+
+.table-row > td {
+    background-color: rgba(100, 100, 100, 0);
+    transition: background-color 100ms linear;
+}
+
+.table-row:hover > td {
+    background-color: rgba(100, 100, 100, 0.1);
+}

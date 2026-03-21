@@ -13,32 +13,30 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
             ]);
         }
 
-        $filter = null;
-        $filterSql = "";
         $sqlParameters = [];
+        $whereClauses = [];
 
-        if(isset($_GET['$category'])) {
-            $filterSql = "
-                WHERE `category` = :category
-            ";
+        if(isset($_GET['$category']) && $_GET['$category'] !== '') {
+            $whereClauses[] = '`category` = :category';
+            $sqlParameters[':category'] = intval($_GET['$category']);
         }
 
-        if(isset($_GET['$filter'])) {
-            if ($filterSql == "") {
-                $filterSql = "WHERE ";
-            }
-            else {
-                $filterSql .= " AND ";
-            }
+        if(isset($_GET['$mine']) && $_GET['$mine'] === 'true') {
+            $whereClauses[] = '`user_id` = :user_id';
+            $sqlParameters[':user_id'] = $user['id'];
+        }
 
-            $filterSql .= "
-                (`title` LIKE :titleFilter
-                OR `body` LIKE :bodyFilter)
-            ";
-
+        $filter = null;
+        if(isset($_GET['$filter']) && $_GET['$filter'] !== '') {
             $filter = str_replace(['\\', '_', '%'], ['\\\\', '\\_', '\\%'], $_GET['$filter']);
+            $whereClauses[] = '(`title` LIKE :titleFilter OR `body` LIKE :bodyFilter)';
             $sqlParameters[":titleFilter"] = "%$filter%";
             $sqlParameters[":bodyFilter"] = "%$filter%";
+        }
+
+        $filterSql = '';
+        if(!empty($whereClauses)) {
+            $filterSql = 'WHERE ' . implode(' AND ', $whereClauses);
         }
 
         // Count total number of adverts
@@ -50,36 +48,32 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         $totalCount = $row['cnt'];
 
         // Fetch the adverts
-        $page = intval($_GET['$page']);
-        $pageSize = intval($_GET['$pageSize']);
+        $page = isset($_GET['$page']) ? intval($_GET['$page']) : 0;
+        $pageSize = isset($_GET['$pageSize']) ? intval($_GET['$pageSize']) : 50;
 
         // Fix-up the page if it goes beyond the count
-        if($page * $pageSize > $totalCount) {
-            $page = floor($totalCount / $pageSize);
+        if($pageSize > 0 && $page * $pageSize >= $totalCount && $totalCount > 0) {
+            $page = intval(floor(($totalCount - 1) / $pageSize));
         }
 
-        $sqlParameters = [
+        $paginationParams = array_merge($sqlParameters, [
             ":limit" => $pageSize,
             ":skip" => $page * $pageSize
-        ];
-        if($filter) {
-            $sqlParameters[":titleFilter"] = "%$filter%";
-            $sqlParameters[":bodyFilter"] = "%$filter%";
-        }
+        ]);
 
         $rows = $db->queryAll("
-            SELECT `id`, `title`, `body`, `ap`.`id` AS `first_photo_id`
+            SELECT `a`.`id`, `a`.`title`, `a`.`body`, `a`.`category`, `ap`.`id` AS `first_photo_id`
             FROM `adverts` AS `a`
-            LEFT OUTER JOIN (
-                SELECT `advert_id`, `id`
-                FROM `advert_photos`
-                ORDER BY `ordering` ASC
-                LIMIT 1
-            ) AS `ap` ON `ap`.`advert_id` = `a`.`id`
+            LEFT OUTER JOIN `advert_photos` AS `ap` ON `ap`.`advert_id` = `a`.`id`
+                AND `ap`.`ordering` = (
+                    SELECT MIN(`ap2`.`ordering`) FROM `advert_photos` AS `ap2`
+                    WHERE `ap2`.`advert_id` = `a`.`id`
+                )
             $filterSql
+            ORDER BY `a`.`id` DESC
             LIMIT :limit
             OFFSET :skip
-        ", $sqlParameters);
+        ", $paginationParams);
 
         return new JSON([
             'success' => true,
@@ -90,13 +84,14 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
                     'id' => $row['id'],
                     'title' => $row['title'],
                     'body' => $row['body'],
+                    'category' => $row['category'],
                     'first_photo_id' => $row['first_photo_id']
                 ];
             }, $rows)
         ]);
     });
 
-    $r->addRoute('GET', 'api/adverts/{id:\d+}', function($para, $values) use ($db, $user) {
+    $r->addRoute('GET', 'api/adverts/{id:\\d+}', function($para, $values) use ($db, $user) {
         if(!$user) {
             http_response_code(401);
             return new JSON([
@@ -105,20 +100,21 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
             ]);
         }
 
-        $id = $para['id'];
+        $id = intval($para['id']);
 
         $advert = $db->querySingle("
-            SELECT `title`, `body`
-            FROM `users`
-            WHERE id = :id
+            SELECT `id`, `title`, `body`, `category`, `user_id`
+            FROM `adverts`
+            WHERE `id` = :id
         ", [
-            ':id' => intval($id)
+            ':id' => $id
         ]);
 
         if(!$advert) {
+            http_response_code(404);
             return new JSON([
                 'success' => false,
-                'reason' => 'USER_NOT_FOUND'
+                'reason' => 'ADVERT_NOT_FOUND'
             ]);
         }
 
@@ -128,14 +124,17 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
             WHERE `ap`.`advert_id` = :advert_id
             ORDER BY `ordering` ASC
         ", [
-            ':advert_id' => intval($id)
+            ':advert_id' => $id
         ]);
 
         return new JSON([
             'success' => true,
-            'user' => [
+            'advert' => [
+                'id' => $advert['id'],
                 'title' => $advert['title'],
                 'body' => $advert['body'],
+                'category' => $advert['category'],
+                'is_mine' => $advert['user_id'] === $user['id'],
                 'photos' => array_map(function($row) {
                     return [
                         'id' => $row['id']
@@ -145,7 +144,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         ]);
     });
 
-    $r->addRoute('GET', 'api/adverts/{advert_id:\d+}/photos/{photo_id:\d+}', function($para, $values) use ($db, $user, $file_storage) {
+    $r->addRoute('GET', 'api/adverts/{advert_id:\\d+}/photos/{photo_id:\\d+}', function($para, $values) use ($db, $user, $file_storage) {
         if(!$user) {
             http_response_code(401);
             return new JSON([
@@ -157,7 +156,6 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         $advert_id = intval($para['advert_id']);
         $photo_id = intval($para['photo_id']);
 
-        // Get the dekverklaring
         $row = $db->querySingle("
             SELECT 1
             FROM `advert_photos`
@@ -167,7 +165,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
             ':id' => $photo_id,
             ':advert_id' => $advert_id
         ]);
-        
+
         if(!$row) {
             http_response_code(404);
             return new JSON([
@@ -188,8 +186,40 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
                 "reason" => "UNAUTHORIZED"
             ]);
         }
-        
-        // TODO: Check if the user has permissions to delete this advert
+
+        $body = json_decode(file_get_contents('php://input'), true);
+        $type = $body['type'];
+        $items = array_map('intval', $body['items']);
+
+        if($type === 'including') {
+            foreach($items as $id) {
+                $advert = $db->querySingle("SELECT `user_id` FROM `adverts` WHERE `id` = :id", [':id' => $id]);
+                if($advert && $advert['user_id'] === $user['id']) {
+                    $photos = $db->queryAll("SELECT `id` FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
+                    foreach($photos as $photo) {
+                        $path = $file_storage . DIRECTORY_SEPARATOR . "advert-" . $id . "-" . $photo['id'] . ".jpg";
+                        if(file_exists($path)) unlink($path);
+                    }
+                    $db->execute("DELETE FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
+                    $db->execute("DELETE FROM `adverts` WHERE `id` = :id AND `user_id` = :user_id", [':id' => $id, ':user_id' => $user['id']]);
+                }
+            }
+        } else {
+            // excluding: delete all of the user's adverts except the listed items
+            $adverts = $db->queryAll("SELECT `id` FROM `adverts` WHERE `user_id` = :user_id", [':user_id' => $user['id']]);
+            foreach($adverts as $advert) {
+                if(!in_array($advert['id'], $items)) {
+                    $id = $advert['id'];
+                    $photos = $db->queryAll("SELECT `id` FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
+                    foreach($photos as $photo) {
+                        $path = $file_storage . DIRECTORY_SEPARATOR . "advert-" . $id . "-" . $photo['id'] . ".jpg";
+                        if(file_exists($path)) unlink($path);
+                    }
+                    $db->execute("DELETE FROM `advert_photos` WHERE `advert_id` = :advert_id", [':advert_id' => $id]);
+                    $db->execute("DELETE FROM `adverts` WHERE `id` = :id", [':id' => $id]);
+                }
+            }
+        }
 
         return new JSON([
             'success' => true
@@ -207,13 +237,14 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
 
         $db->execute("
             INSERT INTO `adverts` (
-                `category`, `title`, `body`
+                `user_id`, `category`, `title`, `body`
             )
             VALUES (
-                :category, :title, :body
+                :user_id, :category, :title, :body
             )
         ", [
-            ':category' => $_POST['category'],
+            ':user_id' => $user['id'],
+            ':category' => intval($_POST['category']),
             ':title' => $_POST['title'],
             ':body' => $_POST['body'],
         ]);
@@ -237,6 +268,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
                     ':ordering' => $index
                 ]);
 
+                $photo_id = $db->lastInsertId();
                 $destinationPath = $file_storage . DIRECTORY_SEPARATOR . "advert-" . $advert_id . "-" . $photo_id . ".jpg";
                 $image = new Imagick($tmp_name);
                 $image->stripImage();
@@ -254,7 +286,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
         ]);
     });
 
-    $r->addRoute('PATCH', 'api/adverts/{id:\d+}', function($para, $values) use ($db, $user, $file_storage) {
+    $r->addRoute('PATCH', 'api/adverts/{id:\\d+}', function($para, $values) use ($db, $user, $file_storage) {
         if(!$user) {
             http_response_code(401);
             return new JSON([
@@ -263,7 +295,7 @@ function register_adverts_routes(FastRoute\RouteCollector $r, \Lib\Database $db,
             ]);
         }
 
-        $id = $para['id'];
+        $id = intval($para['id']);
 
         return new JSON([
             "success" => true
