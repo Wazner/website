@@ -133,6 +133,6 @@ export class EditAdvertPageComponent implements OnInit {
   }
 
   onCancelClick() {
-    this.router.navigate(['beheren'], { relativeTo: this.route.parent?.parent });
+    this.router.navigate(["marktplaats", "beheren"], { relativeTo: this.route.parent });
   }
 }
