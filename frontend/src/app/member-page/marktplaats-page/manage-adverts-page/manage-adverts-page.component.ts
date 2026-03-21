@@ -7,7 +7,7 @@ import { SelectionMap, SelectionType } from 'src/app/services/selection';
 import { DeleteConfirmationDialogComponent } from 'src/app/delete-confirmation-dialog/delete-confirmation-dialog.component';
 import { PageEvent } from '@angular/material/paginator';
 import { AuthenticationService } from 'src/app/services/authentication.service';
-import { MatButtonToggleChange } from '@angular/material/button-toggle';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 interface Advert {
   id: number;
@@ -43,6 +43,7 @@ export class ManageAdvertsPageComponent implements OnInit {
     private dialog: MatDialog,
     private router: Router,
     private route: ActivatedRoute,
+    private snackBar: MatSnackBar,
     authService: AuthenticationService,
     titleService: AppTitleService
   ) {
@@ -95,6 +96,10 @@ export class ManageAdvertsPageComponent implements OnInit {
       items: Array.from(this.selection.items),
       admin: this.adminMode
     }).subscribe(() => {
+      this.snackBar.open("Advertentie is verlengd", undefined, {
+        duration: 5000
+      });
+
       this.selection.clear();
       this.loadAdverts();
     });
